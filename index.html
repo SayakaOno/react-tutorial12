@@ -14,7 +14,51 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <script>
+      Window.API = {
+        fetchFriends() {
+          return new Promise((res, rej) => {
+            const friends = [
+              { name: "friend1", active: true },
+              { name: "friend2", active: true },
+              { name: "friend3", active: true }
+            ];
+
+            setTimeout(() => res(friends), 2000);
+          });
+        }
+      };
+    </script>
+
     <script type="text/babel">
+      class Loading extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = { text: "Loading" };
+        }
+        componentDidMount() {
+          const stopper = this.state.text + "...";
+
+          this.interval = setInterval(() => {
+            this.state.text === stopper
+              ? this.setState({ text: "Loading" })
+              : this.setState(prevState => {
+                  return {
+                    text: prevState.text + "."
+                  };
+                });
+          }, 300);
+        }
+
+        componentWillUnmount() {
+          clearInterval(this.interval);
+        }
+
+        render() {
+          return <p>{this.state.text}</p>;
+        }
+      }
       function FriendsList(props) {
         return (
           <div>
@@ -56,18 +100,23 @@
         constructor(props) {
           super(props);
           this.state = {
-            friends: [
-              { name: "friend1", active: true },
-              { name: "friend2", active: true },
-              { name: "friend3", active: true }
-            ],
-            input: ""
+            friends: [],
+            input: "",
+            loading: true
           };
           this.handleRemoveFriend = this.handleRemoveFriend.bind(this);
           this.updateInput = this.updateInput.bind(this);
           this.handleAddFirend = this.handleAddFirend.bind(this);
           this.toggleActivate = this.toggleActivate.bind(this);
         }
+
+        componentDidMount() {
+          Window.API.fetchFriends().then(friends => {
+            this.setState({ friends, loading: false });
+          });
+        }
+
+        componentWillMount() {}
 
         handleAddFirend() {
           if (!this.state.input) return;
@@ -117,6 +166,9 @@
         }
 
         render() {
+          if (this.state.loading) {
+            return <Loading />;
+          }
           return (
             <div>
               <input
