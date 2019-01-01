@@ -17,18 +17,38 @@
     <script type="text/babel">
       function FriendsList(props) {
         return (
-          <ul>
-            {props.list.map(name => {
-              return (
-                <li key={name}>
-                  <span>{name}</span>
-                  <button onClick={() => props.onRemoveFriend(name)}>
-                    Remove
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div>
+            <h2>{props.title}</h2>
+            <ul>
+              {props.list.map(friend => {
+                return (
+                  <li key={friend.name}>
+                    <span>{friend.name}</span>
+                    {props.title === "Active friends" ? (
+                      <React.Fragment>
+                        <button
+                          onClick={() => props.onRemoveFriend(friend.name)}
+                        >
+                          Remove
+                        </button>
+                        <button
+                          onClick={() => props.onDeactivateFriend(friend.name)}
+                        >
+                          Deactivate
+                        </button>
+                      </React.Fragment>
+                    ) : (
+                      <button
+                        onClick={() => props.onActivateFriend(friend.name)}
+                      >
+                        Activate
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         );
       }
 
@@ -36,28 +56,42 @@
         constructor(props) {
           super(props);
           this.state = {
-            friends: ["Mami", "Yuumi", "Shizuha"],
+            friends: [
+              { name: "friend1", active: true },
+              { name: "friend2", active: true },
+              { name: "friend3", active: true }
+            ],
             input: ""
           };
           this.handleRemoveFriend = this.handleRemoveFriend.bind(this);
           this.updateInput = this.updateInput.bind(this);
           this.handleAddFirend = this.handleAddFirend.bind(this);
+          this.handleClearFirend = this.handleClearFirend.bind(this);
+          this.getFilteredFriends = this.getFilteredFriends.bind(this);
+          this.toggleActivate = this.toggleActivate.bind(this);
         }
 
         handleAddFirend() {
           if (!this.state.input) return;
           this.setState(prevState => {
             return {
-              friends: prevState.friends.concat(prevState.input),
+              friends: prevState.friends.concat({
+                name: prevState.input,
+                active: true
+              }),
               input: ""
             };
           });
         }
 
+        handleClearFirend() {
+          this.setState({ friends: [] });
+        }
+
         handleRemoveFriend(name) {
           this.setState(prevState => {
             return {
-              friends: prevState.friends.filter(friend => friend !== name)
+              friends: prevState.friends.filter(friend => friend.name !== name)
             };
           });
         }
@@ -65,6 +99,32 @@
         updateInput(e) {
           const value = e.target.value;
           this.setState({ input: value });
+        }
+
+        getFilteredFriends(active) {
+          let filteredFriends;
+          if (active) {
+            filteredFriends = this.state.friends.filter(
+              friend => friend.active
+            );
+          } else {
+            filteredFriends = this.state.friends.filter(
+              friend => friend.active === false
+            );
+          }
+          return filteredFriends;
+        }
+
+        toggleActivate(name) {
+          this.setState(prevState => {
+            let friends = prevState.friends.slice();
+            friends.forEach((friend, index) => {
+              if (friend.name === name) {
+                friends[index].active = !friend.active;
+              }
+            });
+            return { friends };
+          });
         }
 
         render() {
@@ -77,9 +137,18 @@
                 placeholder="new friend"
               />
               <button onClick={this.handleAddFirend}>Submit</button>
+              <button onClick={this.handleClearFirend}>Clear All</button>
               <FriendsList
-                list={this.state.friends}
+                title="Active friends"
+                list={this.getFilteredFriends(true)}
                 onRemoveFriend={this.handleRemoveFriend}
+                onDeactivateFriend={this.toggleActivate}
+              />
+              <FriendsList
+                title="Inactive friends"
+                list={this.getFilteredFriends(false)}
+                onRemoveFriend={this.handleRemoveFriend}
+                onActivateFriend={this.toggleActivate}
               />
             </div>
           );
